@@ -12,6 +12,7 @@ import scipy.interpolate as interp
 from scipy.signal import butter, lfilter
 from numpy import linalg as la
 import csv
+from numpy.lib.format import open_memmap
 
 I=1.j
 c_light = .29979246;#m/ns
@@ -284,7 +285,7 @@ def sincInterpolate(datax, datay, GSs):
         index+=1
     return outx, outy
 
-def sincInterpolateFast(datax, datay, GSs, N=10):
+def sincInterpolateFast(datax, datay, GSs, N=10): #TODO: Note to Cade and Steven: some comments would be nice! What is GSs??
     T=datax[1]-datax[0]
     dt=1./GSs
     tVec=np.arange(0., datax[datax.size-1], dt);
@@ -356,3 +357,207 @@ def dot(one, two, norm=1):
     else:
         out=prod
     return out
+
+def make_pulse(t, t_central, amplitude, freq_central):
+    pulse = amplitude * sig.gausspulse(t - t_central, freq_central)
+    return pulse
+
+def create_memmap(file, dimensions, data_type ='complex'):
+    A = open_memmap(file, shape = dimensions, mode='w+', dtype = data_type)
+    return A
+
+def print_var_name(variable):
+    label = ''
+    for name in globals():
+        if eval(name) is variable:
+            print(name)
+            label = name
+    return label
+
+#Functions -> to read input functions
+
+def select_variable(var_str,fname):
+    output_val = np.nan
+    with open(fname) as f:
+        for line in f:
+            columns = line.split()
+            if len(columns) > 0:
+                label = str(columns[0])
+                filevar_str = label[1:]
+                if var_str == filevar_str:
+                    value = float(columns[1])
+                    output_val = value
+    return output_val
+
+def select_string(var_str,fname):
+    output_str = ''
+    with open(fname) as f:
+        for line in f:
+            columns = line.split()
+            if len(columns) > 0:
+                label = str(columns[0])
+                filevar_str = label[1:]
+                if var_str == filevar_str:
+                    string = str(columns[1])
+                    output_str = string
+    return output_str
+
+def count_objects(obj_type, fname):
+    nObjs = 0
+    with open(fname) as f:
+        for line in f:
+            columns = line.split()
+            if len(columns) > 0:
+                label = str(columns[0])
+                filevar_str = label[1:]
+                if obj_type == filevar_str:
+                    nObjs += 1
+    return nObjs
+
+from geometry import triangle, circle
+from shapely.geometry import Point
+from permittivity import *
+
+
+def select_crevass(fname):
+    crevass_list = []
+    with open(fname) as f:
+        for line in f:
+            columns = line.split()
+            if len(columns) > 0:
+                label = str(columns[0])
+                filevar_str = label[1:]
+                if filevar_str == "crevass":
+                    x1 = float(columns[1])
+                    z1 = float(columns[2])
+                    p1 = Point(x1,z1)
+
+                    x2 = float(columns[3])
+                    z2 = float(columns[4])
+                    p2 = Point(x2,z2)
+
+                    x3 = float(columns[5])
+                    z3 = float(columns[6])
+                    p3 = Point(x3,z3)
+
+                    n_object = 1+0j
+                    triangle_i = triangle(p1,p2,p3, n_object)
+                    crevass_list.append(triangle_i)
+    return crevass_list
+
+def select_aquifer(fname):
+    aquifer_list = []
+    with open(fname) as f:
+        for line in f:
+            columns = line.split()
+            if len(columns) > 0:
+                label = str(columns[0])
+                filevar_str = label[1:]
+                if filevar_str == "aquifer":
+                    x1 = float(columns[1])
+                    z1 = float(columns[2])
+                    p1 = Point(x1,z1)
+
+                    x2 = float(columns[3])
+                    z2 = float(columns[4])
+                    p2 = Point(x2,z2)
+
+                    x3 = float(columns[5])
+                    z3 = float(columns[6])
+                    p3 = Point(x3,z3)
+
+                    n_object = eps2m(eps_water)
+                    triangle_i = triangle(p1,p2,p3, n_object)
+                    aquifer_list.append(triangle_i)
+    return aquifer_list
+
+def select_triangle(fname):
+    triangle_list = []
+    with open(fname) as f:
+        for line in f:
+            columns = line.split()
+            if len(columns) > 0:
+                label = str(columns[0])
+                filevar_str = label[1:]
+                if filevar_str == "triangle":
+                    x1 = float(columns[1])
+                    z1 = float(columns[2])
+                    p1 = Point(x1,z1)
+
+                    x2 = float(columns[3])
+                    z2 = float(columns[4])
+                    p2 = Point(x2,z2)
+
+                    x3 = float(columns[5])
+                    z3 = float(columns[6])
+                    p3 = Point(x3,z3)
+
+                    n_object = 1+0j
+                    triangle_i = triangle(p1,p2,p3, n_object)
+                    triangle_list.append(triangle_i)
+    return triangle_list
+
+def select_circle(fname):
+    circle_list = []
+    with open(fname) as f:
+        for line in f:
+            columns = line.split()
+            if len(columns) > 0:
+                label = str(columns[0])
+                filevar_str = label[1:]
+                if filevar_str == "circle":
+                    x = float(columns[1])
+                    z = float(columns[2])
+                    r = float(columns[3])
+                    n_circle = float(columns[3])
+
+                    circle_i = circle(x,z,r, n_circle)
+                    circle_list.append(circle_i)
+    return circle_list
+
+def select_meteor(fname):
+    meteor_list = []
+    with open(fname) as f:
+        for line in f:
+            columns = line.split()
+            if len(columns) > 0:
+                label = str(columns[0])
+                filevar_str = label[1:]
+                if filevar_str == "meteor":
+                    x = float(columns[1])
+                    z = float(columns[2])
+                    r = float(columns[3])
+                    n_meteor = eps2m(eps_meteor)
+                    circle_i = circle(x,z,r, n_meteor)
+                    meteor_list.append(circle_i)
+    return meteor_list
+
+
+def select_range(var_str,fname):
+    output_array = np.nan
+    with open(fname) as f:
+        for line in f:
+            columns = line.split()
+            if len(columns) > 0:
+                label = str(columns[0])
+                filevar_str = label[1:]
+                if var_str == filevar_str:
+                    min_val = float(columns[1])
+                    max_val = float(columns[2])
+                    val_step = float(columns[3])
+                    output_array = np.arange(min_val, max_val, val_step)
+    return output_array
+
+#Implement Backwards Solution -> based on do_solver()
+def cut_xaxis(x, xmin, xmax):
+    idx_min = util.findNearest(xmin, x)
+    idx_max = util.findNearest(xmax, x)
+    return x[idx_min:idx_max]
+
+#Reflection Coefficient -> inputs can be complex
+def reflection_coefficient(n1, n2):
+    return abs(n1.real - n2.real) / (n1.real + n2.real)
+
+#Transmission Coefficient
+def transmission_coefficient(n1, n2):
+    return 1 - reflection_coefficient(n1, n2)
