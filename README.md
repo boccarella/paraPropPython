@@ -19,3 +19,11 @@ cd into the repo directory and try:
 python3 simpleExample.py <frequency [GHz, keep it below 1]> <source depth [m]> <use density fluctiations? [0=no, 1=yes]>
 
 and you should see a plot. 
+
+# paraPropBackwards
+this is an update of the original code to include a range dependent refractive index (n = n(x,z)) and to allow simulation of backwards scattered EM waves off of objects by implementing a 2 way split step parabolic equation equation solver.
+
+Simulation data, metadata and settings are haved to HDF files
+Simulations are set up using a 'input' text file. See example.
+To run a simulation:
+python runSimulation.py <input-file.txt> <output-file.h5>
