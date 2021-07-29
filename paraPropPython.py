@@ -670,7 +670,7 @@ class paraProp:
                 return np.NaN
          
         # find closest index #
-        dIndex = round((depth + self.filterDepth + self.airHeight) / self.dz)
+        dIndex = int( round((depth + self.filterDepth + self.airHeight) / self.dz) )
         
         return vec[dIndex]
     
@@ -840,6 +840,7 @@ class paraProp:
 
                 #Complete forward propagation
                 #Commence backwards propagation
+                print('Number of reflections encountered: ', nRefl)
                 if nRefl > 0:
                     refl_source_3arr = np.zeros((self.xNum, self.zNumFull, nRefl), dtype='complex')
                     for k in range(nRefl):

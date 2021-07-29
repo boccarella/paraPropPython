@@ -77,3 +77,40 @@ print('Ice, eps_r =', eps_ice, 'n =', m_ice, 'alpha = ', alpha(eps_ice, freq_tes
 eps_meteor = 8.2 + 0.1558j #Taken from Herique et al. (2018) Direct Observations of Asteroid Interior and Regolith Structure: Science Measurement Requirements
 eps_vacuum = 1.0
 eps_water = 82 + 899j #Based on the Conductivity of Salt Water -> 5 S/m
+def enceladus_2layer(z, snow_depth=100): #Create a flat layer of snow above ice
+    n_snow = eps2m(eps_snow)
+    n_ice = eps2m(eps_ice)
+    n_vacuum = 1.0
+    n_material = n_vacuum
+
+    if z >= 0 and z < snow_depth:
+        n_material = n_snow
+    elif z >= snow_depth:
+        n_material = n_ice
+    return n_material
+
+def enceladus_environ(x, z, snow_depth = 100, meteor_list = [], crevass_list = [], aquifer_list=[]): #Creates a 2 layer geometry with added meteorites (spheres), crevasses and aquifers (triangles)
+    n_medium = enceladus_2layer(z, snow_depth)
+
+    numMeteors = len(meteor_list)
+    numCrevasses = len(crevass_list)
+    numAquifers = len(aquifer_list)
+    #Loop over meteorites
+
+
+    for i in range(numMeteors):
+        meteor_i = meteor_list[i] #must be sphere
+        if meteor_i.isInside(x,z) == True:
+            n_medium = eps2m(meteor_i.eps_r)
+
+    for i in range(numCrevasses):
+        crevass_i = crevass_list[i]
+        if crevass_i.isInside(x,z) == True:
+            n_medium = eps2m(crevass_i.eps_r)
+
+    for i in range(numAquifers):
+        aquifer_i = aquifer_list[i]
+        if aquifer_i.isInside(x,z) == True:
+            n_medium = eps2m(aquifer_i.eps_r)
+
+    return n_medium

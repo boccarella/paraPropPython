@@ -96,7 +96,7 @@ def nProf(x, z):
 if method == "func":
     profile_str = util.select_string("profile", fname_in)
 
-    if profile_str == "enceladus_environment":
+    if profile_str == "enceladus_environ":
         snow_depth0 = util.select_variable("snow_depth", fname_in)
         crevass_list0 = []
         aquifer_list0 = []
@@ -108,7 +108,7 @@ if method == "func":
         if nMeteors > 0:
             meteor_list0 = util.select_meteor(fname_in)
         def nProf(x,z):
-            return epsilon.enceladus_environ(x, z, snow_depth = snow_depth0, crevass_list = crevass_list0, aquifer_list = aquifer_list0, meteeor_list = meteor_list0)
+            return epsilon.enceladus_environ(x, z, snow_depth = snow_depth0, crevass_list = crevass_list0, aquifer_list = aquifer_list0, meteor_list = meteor_list0)
     elif profile_str == 'pure_ice':
         def nProf(x,z):
             return epsilon.pure_ice(x,z)
@@ -192,12 +192,15 @@ for ind_tx in range(nTX):
         sim.do_solver2(rxList, freqMin, freqMax, 1, 0.1)
     elif simul_mode == "1D":
         sim.do_solver()
+    else:
+        print("Warning, invalid simul_mode, please set #simul_mode backwards_solver, 2D or 1D in ", fname_in)
+        sys.exit()
     tend_solver = time.time()
     tduration_solver = tend_solver - tstart_solver
     print("Solution complete:, duration: ", tduration)
 
     for ind_rx in range(nRX):
-        rx = rxList_out[ind_rx]
+        rx = rxList[ind_rx]
 
         rx_label = "rx-" + str(ind_rx)
         rx_hdf = tx_hdf.create_group(rx_label)
