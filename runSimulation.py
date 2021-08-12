@@ -211,7 +211,7 @@ for ind_tx in range(nTX):
     elif simul_mode == "2D":
         sim.do_solver2(rxList, freqMin, freqMax, 1, 0.1)
     elif simul_mode == "1D":
-        sim.do_solver()
+        sim.do_solver(rxList)
     else:
         print("Warning, invalid simul_mode, please set #simul_mode backwards_solver, 2D or 1D in ", fname_in)
         sys.exit()
@@ -229,7 +229,7 @@ for ind_tx in range(nTX):
         rx_hdf.attrs["Depth"] = rx.z
 
         rx_signal = rx.get_signal()
-        rx_spectrum = rx.spectrum
+        rx_spectrum = rx.get_spectrum()
         rx_hdf.create_dataset("rxPulse", data=rx_signal)
         rx_hdf.create_dataset("rxSpectrum", data=rx_spectrum)
     print("saving date to file, proceed with next source \n")
