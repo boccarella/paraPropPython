@@ -53,7 +53,7 @@ dz = util.select_variable("dz", fname_in) #Depth Resolution
 
 #simul_mode = 'backwards_solver'
 simul_mode = util.select_string("simul_mode", fname_in) #Selects simulation mode: choices: 1D, 2D, backwards_solver
-
+print(simul_mode)
 #Save to HDF File
 output_hdf.attrs["iceDepth"] = iceDepth
 output_hdf.attrs["iceLength"] = iceLength
@@ -72,9 +72,9 @@ nRX_ranges = len(rx_ranges)
 rxList= []
 rxArray = np.ones((nRX_ranges, nRX_depths, 2))
 
-output_hdf["rx_ranges"] = rx_ranges
-output_hdf["rx_depths"] = rx_depths
-output_hdf["rx_depths"] = tx_depths
+output_hdf.create_dataset("tx_depths", data = tx_depths)
+output_hdf.create_dataset("rx_depths", data = rx_depths)
+output_hdf.create_dataset("rx_ranges", data = rx_ranges)
 
 for i in range(len(rx_ranges)):
     for j in range(len(rx_depths)):
@@ -116,11 +116,17 @@ if method == "func":
                 return epsilon.enceladus_environ(x, z, snow_depth = snow_depth0, crevass_list = crevass_list0, aquifer_list = aquifer_list0, meteor_list = meteor_list0)
         elif simul_mode == "2D":
             def nProf(x,z):
-                return epsilon.enceladus_environ(x,z, snow_depth = snow_depth0)
-        elif simul_mode == "1D"
+                return epsilon.enceladus_environ(x, z, snow_depth = snow_depth0)
+        elif simul_mode == "1D":
             def nProf(z):
-                return epsilon(x = 10, z, snow_depth = snow_depth0)
+                return epsilon.enceladus_2layer(z, snow_depth=snow_depth0)
     elif profile_str == 'pure_ice':
+        def nProf(x,z):
+            return epsilon.pure_ice(x,z)
+    elif profile_str == "south_pole":
+        def nProf(z):
+            return epsilon.south_pole(z)
+    else:
         def nProf(x,z):
             return epsilon.pure_ice(x,z)
 
@@ -178,7 +184,10 @@ for ind_tx in range(nTX):
     # Permittivity Profile
     print("Set Refractive Index Profile: ", profile_str)
     tstart_n2 = time.time()
-    sim.set_n2('func', nFunc=nProf)
+    if simul_mode == "1D":
+        sim.set_n("func", nFunc=nProf)
+    elif simul_mode == "2D" or simul_mode == "backwards_solver":
+        sim.set_n2("func", nFunc=nProf)
     tend_n2 = time.time()
     print("n profile set, duration = ", tend_n2 - tstart_n2)
 
@@ -208,7 +217,7 @@ for ind_tx in range(nTX):
         sys.exit()
     tend_solver = time.time()
     tduration_solver = tend_solver - tstart_solver
-    print("Solution complete:, duration: ", tduration)
+    print("Solution complete:, duration: ", tduration_solver)
 
     for ind_rx in range(nRX):
         rx = rxList[ind_rx]
