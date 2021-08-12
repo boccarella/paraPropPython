@@ -11,7 +11,7 @@ c0 = 1./sqrt(epsilon0*mu0) #Speed of Light in Vacuum
 def eps2m(eps_c): #Return complex refractive index (m) from complex relative permittivity (eps_c)
     eps_r = eps_c.real
     eps_i = eps_c.imag
-    n_sq = (1/2.) * (sqrt(eps_r**2 + eps_i**2) + eps_r )
+    n_sq = (1/2.) * (sqrt(eps_r**2 + eps_i**2) + eps_r ) 
     k_sq = (1/2.) * (sqrt(eps_r**2 + eps_i**2) - eps_r )
     n = sqrt(n_sq)
     k = sqrt(k_sq)
@@ -25,6 +25,8 @@ def cond2eps_im(sigma, f):
 def sigma_from_p(p, sigma): #p: porosity, sigma: conductivity for p = 0
     v = 1 - p #volume filling factor
     return sigma*v*(0.68 + 0.32*v)**2
+
+
 
 def alpha(eps_c, f):
     m_c = eps2m(eps_c)
@@ -57,7 +59,38 @@ def poro2n(poro,eps_r0):
     eps_r = eps_r0*poro*(0.68 + 0.32*poro)**2
     return eps2m(eps_r)
 
-sigma_solid_pure_ice = 8.7e-6 #uS/m
+    
+
+def epsilon_seawater_real(f, S):
+    epsilon_inf = 6.4587
+    epsilon_s = 81.820
+    tau = (17.303+S*(-6.272e-3))*10**(-12)
+    eps_sea_real = epsilon_inf + (epsilon_s-epsilon_inf)/(1+4*pi**2*f**2*tau**2)
+    return eps_sea_real
+
+def epsilon_seawater_imag(f, S):
+    epsilon_inf = 6.4587
+    epsilon_s = 81.820
+    tau = 17.303+S*(-6.272e-3)
+    sigma = 0.086374+0.077454*S
+    eps_sea_imag = ((epsilon_s-epsilon_inf)*2*pi*f*tau)/(1+4*pi**2*f**2*tau**2) + (sigma)/(2*pi*epsilon0*f)
+    print('Conductivity=', sigma*1e-6, 'S/m')
+    return eps_sea_imag
+
+
+def epsilon_snow_imag(sig_solid_pure_ice, f, c = 5.114e4, beta = 0.076):
+    sigma_pure = sigma_from_p(0.1, sigma_solid_pure_ice)
+    sig_sod = c*beta
+    sigma_sodium = sigma_from_p(0.1, sig_sod)
+    sigma_inf = sigma_pure + sigma_sodium
+    print('Conductivity of Snow= ', sigma_inf)
+    eps_snow_imag = (sigma_inf*1e-6)/(epsilon0*f)
+    return eps_snow_imag
+
+    
+    
+
+sigma_solid_pure_ice = 9e-6 #uS/m #8.7
 P_surface = 0.9
 sigma_pure_snow = sigma_from_p(P_surface, sigma_solid_pure_ice)
 print(sigma_pure_snow)
@@ -66,7 +99,9 @@ freq_test = 500e6 #100 MHz
 eps_i_ice = cond2eps_im(sigma_solid_pure_ice, freq_test)
 print(eps_i_ice)
 
-eps_snow = 1.2 + 0.015j #Permittivity of Enceladus Snow (Type III)
+#eps_snow = 1.2 + 0.015j #Permittivity of Enceladus Snow (Type III)
+#eps_snow = 1.2 + 0.139*1j # Permittivity of Enceladus Snow (Type III)
+eps_snow = 1.2 + 1j*epsilon_snow_imag(sigma_solid_pure_ice, 500e6)
 m_snow = eps2m(eps_snow) #
 
 eps_ice = 3.2 + 1j*eps_i_ice
@@ -76,41 +111,12 @@ print('Ice, eps_r =', eps_ice, 'n =', m_ice, 'alpha = ', alpha(eps_ice, freq_tes
 
 eps_meteor = 8.2 + 0.1558j #Taken from Herique et al. (2018) Direct Observations of Asteroid Interior and Regolith Structure: Science Measurement Requirements
 eps_vacuum = 1.0
-eps_water = 82 + 899j #Based on the Conductivity of Salt Water -> 5 S/m
-def enceladus_2layer(z, snow_depth=100): #Create a flat layer of snow above ice
-    n_snow = eps2m(eps_snow)
-    n_ice = eps2m(eps_ice)
-    n_vacuum = 1.0
-    n_material = n_vacuum
-
-    if z >= 0 and z < snow_depth:
-        n_material = n_snow
-    elif z >= snow_depth:
-        n_material = n_ice
-    return n_material
-
-def enceladus_environ(x, z, snow_depth = 100, meteor_list = [], crevass_list = [], aquifer_list=[]): #Creates a 2 layer geometry with added meteorites (spheres), crevasses and aquifers (triangles)
-    n_medium = enceladus_2layer(z, snow_depth)
-
-    numMeteors = len(meteor_list)
-    numCrevasses = len(crevass_list)
-    numAquifers = len(aquifer_list)
-    #Loop over meteorites
-
-
-    for i in range(numMeteors):
-        meteor_i = meteor_list[i] #must be sphere
-        if meteor_i.isInside(x,z) == True:
-            n_medium = eps2m(meteor_i.eps_r)
-
-    for i in range(numCrevasses):
-        crevass_i = crevass_list[i]
-        if crevass_i.isInside(x,z) == True:
-            n_medium = eps2m(crevass_i.eps_r)
-
-    for i in range(numAquifers):
-        aquifer_i = aquifer_list[i]
-        if aquifer_i.isInside(x,z) == True:
-            n_medium = eps2m(aquifer_i.eps_r)
-
-    return n_medium
+#eps_water = 82 + 899j #Based on the Conductivity of Salt Water -> 5 S/m
+#eps_water = 80.778 + 94.9896*1j  
+#eps_water = 85.355 + 90.8838*1j
+eps_water_real = epsilon_seawater_real(500e6, 30)
+eps_water_imag = epsilon_seawater_imag(500e6, 30)
+eps_water = eps_water_real + 1j*eps_water_imag
+print('Seawater Permittivity=', eps_water_real, '+i', eps_water_imag)
+m_water = eps2m(eps_water)
+print('Refractive Index of Seawater= ', m_water, 'alpha= ', alpha(eps_water, freq_test))
