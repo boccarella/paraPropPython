@@ -72,6 +72,10 @@ nRX_ranges = len(rx_ranges)
 rxList= []
 rxArray = np.ones((nRX_ranges, nRX_depths, 2))
 
+output_hdf["rx_ranges"] = rx_ranges
+output_hdf["rx_depths"] = rx_depths
+output_hdf["rx_depths"] = tx_depths
+
 for i in range(len(rx_ranges)):
     for j in range(len(rx_depths)):
         xRX = rx_ranges[i] #Range of Receiver
@@ -107,8 +111,15 @@ if method == "func":
             aquifer_list0 = util.select_aquifer(fname_in)
         if nMeteors > 0:
             meteor_list0 = util.select_meteor(fname_in)
-        def nProf(x,z):
-            return epsilon.enceladus_environ(x, z, snow_depth = snow_depth0, crevass_list = crevass_list0, aquifer_list = aquifer_list0, meteor_list = meteor_list0)
+        if simul_mode == "backwards_solver":
+            def nProf(x,z):
+                return epsilon.enceladus_environ(x, z, snow_depth = snow_depth0, crevass_list = crevass_list0, aquifer_list = aquifer_list0, meteor_list = meteor_list0)
+        elif simul_mode == "2D":
+            def nProf(x,z):
+                return epsilon.enceladus_environ(x,z, snow_depth = snow_depth0)
+        elif simul_mode == "1D"
+            def nProf(z):
+                return epsilon(x = 10, z, snow_depth = snow_depth0)
     elif profile_str == 'pure_ice':
         def nProf(x,z):
             return epsilon.pure_ice(x,z)
