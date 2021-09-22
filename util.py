@@ -2,8 +2,8 @@
 # s. prohira
 # GPL v3
 
-import matplotlib.pyplot as plt
 import numpy as np
+import matplotlib.pyplot as plt
 import scipy as sci
 import scipy.constants as constant
 import scipy.io.wavfile as wav
@@ -356,3 +356,8 @@ def dot(one, two, norm=1):
     else:
         out=prod
     return out
+
+
+def gaussian(x, mu, sigma, norm, base):
+    a = -1. * pow(x - mu, 2. ) / (2 * pow(sig, 2.))
+    return norm * np.exp(a) + base
